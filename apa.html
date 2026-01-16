@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Background Remover (Fixed)</title>
+    <!-- Load Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Load Library AI via Standard Script (Bukan Module) -->
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.4/dist/imgly-background-removal.umd.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 { margin-bottom: 10px; color: var(--primary); }
+        
+        /* Upload Area */
+        .upload-zone {
+            border: 3px dashed #cbd5e1;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #f8fafc;
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        #fileInput { display: none; }
+
+        /* Loading */
+        .loader {
+            display: none;
+            margin: 20px 0;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Result */
+        .result-area {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .result-img {
+            max-width: 100%;
+            border-radius: 10px;
+            background: repeating-conic-gradient(#e2e8f0 0% 25%, #fff 0% 50%) 50% / 20px 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+        .btn:hover { opacity: 0.9; }
+        
+        .error-msg {
+            color: #ef4444;
+            background: #fee2e2;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>✨ Magic Background Remover</h1>
+        <p>Hapus background otomatis dengan AI</p>
+        
+        <div id="errorMessage" class="error-msg"></div>
+
+        <!-- Upload -->
+        <div class="upload-zone" id="dropZone">
+            <span style="font-size: 3rem;">📁</span>
+            <h3>Klik untuk Upload Foto</h3>
+            <p style="color: #64748b; font-size: 0.9rem">Mendukung JPG & PNG</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <!-- Loading -->
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p id="statusText">Sedang mendownload AI Model...<br><small>(Hanya lama di awal)</small></p>
+        </div>
+
+        <!-- Result -->
+        <div class="result-area" id="resultArea">
+            <img id="resultImage" class="result-img" alt="Hasil">
+            <br>
+            <button class="btn" onclick="downloadImage()">📥 Download PNG</button>
+            <br>
+            <button style="background:none; border:none; color:#64748b; margin-top:10px; cursor:pointer; text-decoration:underline;" onclick="location.reload()">Coba Foto Lain</button>
+        </div>
+    </div>
+
+    <script>
+        // Akses library global
+        let removeBackground;
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const loader = document.getElementById('loader');
+        const resultArea = document.getElementById('resultArea');
+        const resultImage = document.getElementById('resultImage');
+        const statusText = document.getElementById('statusText');
+        const errorMsg = document.getElementById('errorMessage');
+
+        let imageUrl = null;
+
+        // Cek apakah library termuat
+        window.onload = function() {
+            if (typeof imglyRemoveBackground === 'function') {
+                removeBackground = imglyRemoveBackground;
+            } else {
+                showError("Gagal memuat library AI. Pastikan ada koneksi internet.");
+            }
+        };
+
+        // Event Listeners
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.backgroundColor = '#e0f2fe'; });
+        dropZone.addEventListener('dragleave', () => { dropZone.style.backgroundColor = '#f8fafc'; });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        async function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError("Harap upload file gambar (JPG/PNG).");
+                return;
+            }
+
+            // UI Changes
+            dropZone.style.display = 'none';
+            errorMsg.style.display = 'none';
+            loader.style.display = 'block';
+            statusText.innerHTML = "Menyiapkan AI...<br><small>(Mohon tunggu, jangan refresh)</small>";
+
+            try {
+                // Konfigurasi agar lebih ringan
+                const config = {
+                    progress: (key, current, total) => {
+                        const percent = Math.round((current / total) * 100);
+                        if (key.includes('fetch')) {
+                            statusText.innerText = `Mendownload Data AI: ${percent}%`;
+                        } else {
+                            statusText.innerText = `Memproses Gambar: ${percent}%`;
+                        }
+                    },
+                    // Pakai model standard (lebih stabil dari small/large kadang)
+                    model: 'small', 
+                    output: {
+                        format: 'image/png',
+                        quality: 0.8
+                    }
+                };
+
+                // Proses AI
+                const blob = await removeBackground(file, config);
+                
+                // Tampilkan Hasil
+                imageUrl = URL.createObjectURL(blob);
+                resultImage.src = imageUrl;
+                
+                loader.style.display = 'none';
+                resultArea.style.display = 'block';
+
+            } catch (error) {
+                console.error(error);
+                dropZone.style.display = 'block';
+                loader.style.display = 'none';
+                
+                let pesanError = "Gagal memproses gambar.";
+                
+                // Deteksi error umum karena file protocol
+                if (window.location.protocol === 'file:') {
+                    pesanError = "⚠️ ERROR: Browser memblokir AI di mode file lokal.<br><b>Solusi:</b> Gunakan 'Live Server' di VS Code atau upload file HTML ini ke hosting/localhost.";
+                } else if (error.message.includes('fetch')) {
+                    pesanError = "Gagal mendownload model AI. Cek koneksi internet Anda.";
+                }
+
+                showError(pesanError);
+            }
+        }
+
+        function downloadImage() {
+            if (!imageUrl) return;
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = 'ai-result-hd.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showError(msg) {
+            errorMsg.innerHTML = msg;
+            errorMsg.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
