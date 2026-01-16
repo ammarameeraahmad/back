@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Background Remover - Fixed</title>
+    <title>Background Remover - No Limit</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -15,10 +15,7 @@
             padding: 20px;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+        .container { max-width: 900px; margin: 0 auto; }
 
         h1 {
             text-align: center;
@@ -29,12 +26,7 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 0.95rem;
-        }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
 
         .card {
             background: rgba(255,255,255,0.03);
@@ -45,11 +37,7 @@
         }
 
         /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
 
         .tab {
             flex: 1;
@@ -94,40 +82,75 @@
         }
 
         .upload-icon { font-size: 3rem; margin-bottom: 10px; }
-        
         #fileInput { display: none; }
+
+        /* Settings */
+        .settings-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .setting-item {
+            flex: 1;
+            min-width: 150px;
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .setting-item label {
+            display: block;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .setting-item select, .setting-item input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+        }
 
         /* Progress */
         .progress-section {
             display: none;
             text-align: center;
-            padding: 30px;
+            padding: 40px;
         }
 
-        .progress-ring {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 15px;
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
 
-        .progress-ring circle {
-            fill: none;
-            stroke-width: 6;
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .progress-bar-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            height: 8px;
+            margin: 15px 0;
+            overflow: hidden;
         }
 
-        .progress-ring .bg { stroke: rgba(255,255,255,0.1); }
-        .progress-ring .progress {
-            stroke: url(#gradient);
-            stroke-linecap: round;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
-            transition: stroke-dashoffset 0.3s;
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7b2dff, #00d4ff);
+            width: 0%;
+            transition: width 0.3s;
         }
 
-        .progress-text {
-            font-size: 0.9rem;
-            color: #888;
-        }
+        .progress-text { color: #888; font-size: 0.9rem; }
 
         /* Result */
         .result-section { display: none; }
@@ -151,10 +174,7 @@
             min-height: 200px;
         }
 
-        .img-box img {
-            width: 100%;
-            display: block;
-        }
+        .img-box img { width: 100%; display: block; }
 
         .img-label {
             position: absolute;
@@ -166,12 +186,19 @@
             font-size: 0.8rem;
         }
 
-        /* Buttons */
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+        .img-info {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: #00d4ff;
         }
+
+        /* Buttons */
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
 
         .btn {
             flex: 1;
@@ -194,18 +221,22 @@
             color: #fff;
         }
 
+        .btn-success {
+            background: linear-gradient(135deg, #00c853, #00e676);
+            color: #000;
+        }
+
         .btn-secondary {
             background: rgba(255,255,255,0.1);
             color: #fff;
         }
 
-        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn:hover { transform: translateY(-2px); }
 
         /* Chroma Key Controls */
         .controls-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
             margin: 20px 0;
         }
@@ -247,14 +278,14 @@
             font-family: monospace;
         }
 
-        /* Canvas for picking */
         .picker-canvas {
             max-width: 100%;
-            max-height: 300px;
+            max-height: 350px;
             border-radius: 8px;
             cursor: crosshair;
             display: none;
             margin: 15px auto;
+            border: 2px solid #333;
         }
 
         /* Alert */
@@ -263,6 +294,7 @@
             border-radius: 10px;
             margin-bottom: 15px;
             display: none;
+            font-size: 0.9rem;
         }
 
         .alert-error {
@@ -271,74 +303,78 @@
             color: #ff6b9d;
         }
 
-        .alert-info {
-            background: rgba(0,212,255,0.1);
-            border: 1px solid rgba(0,212,255,0.3);
-            color: #00d4ff;
+        .alert-warning {
+            background: rgba(255,193,7,0.1);
+            border: 1px solid rgba(255,193,7,0.3);
+            color: #ffc107;
         }
 
-        /* Hidden canvas */
-        .hidden-canvas { display: none; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>✨ Background Remover Pro</h1>
-        <p class="subtitle">Hapus background foto dengan mudah - AI atau Manual</p>
+        <p class="subtitle">Hapus background - Tanpa batas ukuran file</p>
 
-        <!-- Alert Messages -->
         <div class="alert alert-error" id="alertError"></div>
-        <div class="alert alert-info" id="alertInfo"></div>
+        <div class="alert alert-warning" id="alertWarning"></div>
 
         <div class="card">
             <!-- Tabs -->
             <div class="tabs">
-                <div class="tab active" onclick="switchTab('ai')">
-                    🤖 Mode AI (Otomatis)
-                </div>
-                <div class="tab" onclick="switchTab('manual')">
-                    🎨 Mode Manual (Chroma Key)
-                </div>
+                <div class="tab active" onclick="switchTab('ai')">🤖 Mode AI</div>
+                <div class="tab" onclick="switchTab('manual')">🎨 Mode Manual</div>
             </div>
 
-            <!-- Upload Zone (Shared) -->
+            <!-- Upload Zone -->
             <div class="upload-zone" id="uploadZone">
                 <div class="upload-icon">📁</div>
                 <h3>Klik atau Drop Foto Disini</h3>
-                <p style="color:#666; margin-top:8px; font-size:0.9rem">JPG, PNG, WebP (Max 10MB)</p>
+                <p style="color:#666; margin-top:8px;">JPG, PNG, WebP - <strong>Tanpa Batas Ukuran</strong></p>
                 <input type="file" id="fileInput" accept="image/*">
             </div>
 
-            <!-- Progress Section -->
+            <!-- Settings -->
+            <div class="settings-row" id="settingsRow">
+                <div class="setting-item">
+                    <label>📐 Resolusi Output</label>
+                    <select id="outputSize">
+                        <option value="original">Original (Full Quality)</option>
+                        <option value="4000">Max 4000px (Recommended)</option>
+                        <option value="2000" selected>Max 2000px (Fast)</option>
+                        <option value="1000">Max 1000px (Very Fast)</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>🖼️ Format Output</label>
+                    <select id="outputFormat">
+                        <option value="png" selected>PNG (Transparent)</option>
+                        <option value="webp">WebP (Smaller Size)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Progress -->
             <div class="progress-section" id="progressSection">
-                <svg class="progress-ring" viewBox="0 0 80 80">
-                    <defs>
-                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#7b2dff"/>
-                            <stop offset="100%" stop-color="#00d4ff"/>
-                        </linearGradient>
-                    </defs>
-                    <circle class="bg" cx="40" cy="40" r="35"/>
-                    <circle class="progress" id="progressCircle" cx="40" cy="40" r="35"
-                        stroke-dasharray="220" stroke-dashoffset="220"/>
-                </svg>
-                <p class="progress-text" id="progressText">Memuat...</p>
+                <div class="spinner"></div>
+                <p class="progress-text" id="progressText">Memproses...</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+                <p style="color:#555; font-size:0.8rem; margin-top:10px;">
+                    File besar mungkin butuh waktu lebih lama
+                </p>
             </div>
 
-            <!-- AI Tab Content -->
-            <div class="tab-content active" id="tabAI">
-                <!-- Result will appear here -->
-            </div>
-
-            <!-- Manual Tab Content -->
+            <!-- Manual Tab -->
             <div class="tab-content" id="tabManual">
                 <p style="color:#888; font-size:0.9rem; margin-bottom:15px;">
-                    💡 Klik pada gambar di bawah untuk memilih warna background yang ingin dihapus
+                    💡 Klik pada gambar untuk memilih warna background
                 </p>
-                
                 <canvas id="pickerCanvas" class="picker-canvas"></canvas>
-
-                <div class="controls-grid" id="manualControls" style="display:none;">
+                
+                <div class="controls-grid hidden" id="manualControls">
                     <div class="control-item">
                         <label>Warna Target</label>
                         <div class="color-row">
@@ -359,140 +395,125 @@
                         <input type="range" id="despill" min="0" max="100" value="50">
                     </div>
                 </div>
-
-                <div class="btn-group" id="manualButtons" style="display:none; margin-top:15px;">
-                    <button class="btn btn-primary" onclick="processManual()">⚡ Proses</button>
+                
+                <div class="btn-group hidden" id="manualButtons" style="margin-top:15px;">
+                    <button class="btn btn-primary" onclick="processManual()">⚡ Hapus Background</button>
                 </div>
             </div>
 
-            <!-- Result Section -->
+            <!-- AI Tab -->
+            <div class="tab-content active" id="tabAI"></div>
+
+            <!-- Result -->
             <div class="result-section" id="resultSection">
                 <div class="compare-grid">
                     <div class="img-box">
-                        <span class="img-label">Original</span>
+                        <span class="img-label">📷 Original</span>
                         <img id="originalImg" alt="Original">
+                        <span class="img-info" id="originalInfo"></span>
                     </div>
                     <div class="img-box">
-                        <span class="img-label">Hasil</span>
+                        <span class="img-label">✅ Hasil</span>
                         <img id="resultImg" alt="Result">
+                        <span class="img-info" id="resultInfo"></span>
                     </div>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-primary" onclick="downloadResult()">📥 Download PNG</button>
+                    <button class="btn btn-success" onclick="downloadResult()">📥 Download</button>
                     <button class="btn btn-secondary" onclick="resetAll()">🔄 Foto Baru</button>
                 </div>
             </div>
         </div>
-
-        <!-- Tips -->
-        <div class="card" style="padding:15px;">
-            <p style="font-size:0.85rem; color:#888;">
-                <strong style="color:#00d4ff;">💡 Tips:</strong> 
-                Mode AI bekerja otomatis untuk foto orang/objek. 
-                Mode Manual cocok untuk background warna solid (green screen, dll).
-            </p>
-        </div>
     </div>
 
     <!-- Hidden Canvases -->
-    <canvas id="workCanvas" class="hidden-canvas"></canvas>
-    <canvas id="outputCanvas" class="hidden-canvas"></canvas>
+    <canvas id="workCanvas" class="hidden"></canvas>
+    <canvas id="outputCanvas" class="hidden"></canvas>
 
     <script type="module">
-        // ============ IMPORT AI LIBRARY ============
         import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0';
         
-        // Konfigurasi untuk browser
         env.allowLocalModels = false;
         env.useBrowserCache = true;
 
-        // ============ GLOBAL VARIABLES ============
-        let currentFile = null;
+        // ============ VARIABLES ============
         let currentMode = 'ai';
+        let currentFile = null;
+        let originalImageData = null;
         let segmenter = null;
-        let resultBlobUrl = null;
+        let resultBlob = null;
 
-        // DOM Elements
+        // DOM
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
         const progressSection = document.getElementById('progressSection');
-        const progressCircle = document.getElementById('progressCircle');
         const progressText = document.getElementById('progressText');
+        const progressBar = document.getElementById('progressBar');
         const resultSection = document.getElementById('resultSection');
         const originalImg = document.getElementById('originalImg');
         const resultImg = document.getElementById('resultImg');
         const alertError = document.getElementById('alertError');
-        const alertInfo = document.getElementById('alertInfo');
+        const alertWarning = document.getElementById('alertWarning');
+        const settingsRow = document.getElementById('settingsRow');
 
-        // Manual mode elements
         const pickerCanvas = document.getElementById('pickerCanvas');
         const pickerCtx = pickerCanvas.getContext('2d');
         const workCanvas = document.getElementById('workCanvas');
         const workCtx = workCanvas.getContext('2d');
         const outputCanvas = document.getElementById('outputCanvas');
         const outputCtx = outputCanvas.getContext('2d');
-        const manualControls = document.getElementById('manualControls');
-        const manualButtons = document.getElementById('manualButtons');
 
-        // ============ EVENT LISTENERS ============
+        // ============ EVENTS ============
         
-        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.onclick = () => fileInput.click();
         
-        uploadZone.addEventListener('dragover', (e) => {
+        uploadZone.ondragover = (e) => {
             e.preventDefault();
             uploadZone.classList.add('dragover');
-        });
+        };
         
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
-        });
+        uploadZone.ondragleave = () => uploadZone.classList.remove('dragover');
         
-        uploadZone.addEventListener('drop', (e) => {
+        uploadZone.ondrop = (e) => {
             e.preventDefault();
             uploadZone.classList.remove('dragover');
             handleFile(e.dataTransfer.files[0]);
+        };
+        
+        fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+        // Color sync
+        document.getElementById('colorPicker').oninput = (e) => {
+            document.getElementById('colorHex').value = e.target.value;
+        };
+        
+        document.getElementById('colorHex').onchange = (e) => {
+            if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+                document.getElementById('colorPicker').value = e.target.value;
+            }
+        };
+
+        // Range displays
+        ['tolerance', 'softness', 'despill'].forEach(id => {
+            document.getElementById(id).oninput = (e) => {
+                document.getElementById(id.slice(0,3) + (id === 'despill' ? 'pillVal' : 'Val')).textContent = e.target.value;
+            };
         });
         
-        fileInput.addEventListener('change', (e) => {
-            handleFile(e.target.files[0]);
-        });
+        document.getElementById('tolerance').oninput = (e) => document.getElementById('tolVal').textContent = e.target.value;
+        document.getElementById('softness').oninput = (e) => document.getElementById('softVal').textContent = e.target.value;
+        document.getElementById('despill').oninput = (e) => document.getElementById('despillVal').textContent = e.target.value;
 
-        // Color picker sync
-        document.getElementById('colorPicker').addEventListener('input', (e) => {
-            document.getElementById('colorHex').value = e.target.value;
-        });
-
-        document.getElementById('colorHex').addEventListener('change', (e) => {
-            const val = e.target.value;
-            if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-                document.getElementById('colorPicker').value = val;
-            }
-        });
-
-        // Range value displays
-        document.getElementById('tolerance').addEventListener('input', (e) => {
-            document.getElementById('tolVal').textContent = e.target.value;
-        });
-        document.getElementById('softness').addEventListener('input', (e) => {
-            document.getElementById('softVal').textContent = e.target.value;
-        });
-        document.getElementById('despill').addEventListener('input', (e) => {
-            document.getElementById('despillVal').textContent = e.target.value;
-        });
-
-        // Pick color from canvas
-        pickerCanvas.addEventListener('click', (e) => {
+        // Canvas color picker
+        pickerCanvas.onclick = (e) => {
             const rect = pickerCanvas.getBoundingClientRect();
             const x = (e.clientX - rect.left) * (pickerCanvas.width / rect.width);
             const y = (e.clientY - rect.top) * (pickerCanvas.height / rect.height);
-            
             const pixel = pickerCtx.getImageData(x, y, 1, 1).data;
-            const hex = '#' + [pixel[0], pixel[1], pixel[2]]
-                .map(x => x.toString(16).padStart(2, '0')).join('');
-            
+            const hex = '#' + [pixel[0], pixel[1], pixel[2]].map(x => x.toString(16).padStart(2, '0')).join('');
             document.getElementById('colorPicker').value = hex;
             document.getElementById('colorHex').value = hex;
-        });
+        };
 
         // ============ FUNCTIONS ============
 
@@ -504,295 +525,316 @@
             document.getElementById('tabAI').classList.toggle('active', mode === 'ai');
             document.getElementById('tabManual').classList.toggle('active', mode === 'manual');
             
-            // If file already loaded and switching to manual, show controls
             if (currentFile && mode === 'manual') {
-                loadImageForManual(currentFile);
+                loadForManual(currentFile);
             }
         };
 
         function handleFile(file) {
-            if (!file) return;
-            
-            if (!file.type.startsWith('image/')) {
-                showError('Harap upload file gambar (JPG/PNG)');
-                return;
-            }
-
-            if (file.size > 10 * 1024 * 1024) {
-                showError('Ukuran file maksimal 10MB');
+            if (!file || !file.type.startsWith('image/')) {
+                showError('Pilih file gambar yang valid');
                 return;
             }
 
             hideAlerts();
             currentFile = file;
+
+            // Show warning for very large files
+            if (file.size > 20 * 1024 * 1024) {
+                showWarning(`File besar (${(file.size/1024/1024).toFixed(1)}MB) - proses mungkin lambat`);
+            }
+
             originalImg.src = URL.createObjectURL(file);
+            document.getElementById('originalInfo').textContent = `${(file.size/1024/1024).toFixed(2)} MB`;
 
             if (currentMode === 'ai') {
                 processAI(file);
             } else {
-                loadImageForManual(file);
+                loadForManual(file);
             }
         }
 
         async function processAI(file) {
-            uploadZone.style.display = 'none';
-            resultSection.style.display = 'none';
-            progressSection.style.display = 'block';
-            
+            showProgress('Menyiapkan...');
+
             try {
-                updateProgress(5, 'Memuat model AI...');
+                // Resize image if needed
+                const maxSize = parseInt(document.getElementById('outputSize').value) || 2000;
+                const processedBlob = await resizeImage(file, maxSize);
                 
-                // Load segmenter jika belum ada
+                updateProgress(10, 'Memuat model AI...');
+                
                 if (!segmenter) {
                     segmenter = await pipeline('image-segmentation', 'Xenova/modnet', {
-                        progress_callback: (progress) => {
-                            if (progress.status === 'downloading') {
-                                const pct = Math.round((progress.loaded / progress.total) * 40);
-                                updateProgress(5 + pct, `Mendownload model: ${pct}%`);
+                        progress_callback: (p) => {
+                            if (p.status === 'downloading') {
+                                const pct = Math.round((p.loaded / p.total) * 30);
+                                updateProgress(10 + pct, `Download model: ${pct}%`);
                             }
                         }
                     });
                 }
 
-                updateProgress(50, 'Memproses gambar...');
-
-                // Buat URL dari file
-                const imageUrl = URL.createObjectURL(file);
+                updateProgress(45, 'Menganalisis gambar...');
                 
-                // Jalankan segmentasi
+                const imageUrl = URL.createObjectURL(processedBlob);
                 const result = await segmenter(imageUrl);
                 
-                updateProgress(80, 'Membuat hasil...');
+                updateProgress(70, 'Menerapkan mask...');
 
-                // Ambil mask dari hasil
-                if (result && result.length > 0 && result[0].mask) {
+                if (result?.[0]?.mask) {
                     const maskBlob = await result[0].mask.toBlob();
-                    
-                    // Gabungkan gambar asli dengan mask
-                    await applyMaskToImage(file, maskBlob);
-                    
+                    await applyMask(processedBlob, maskBlob);
                     updateProgress(100, 'Selesai!');
                     showResult();
                 } else {
-                    throw new Error('Hasil segmentasi tidak valid');
+                    throw new Error('Gagal membuat mask');
                 }
 
-            } catch (error) {
-                console.error('AI Error:', error);
-                progressSection.style.display = 'none';
-                uploadZone.style.display = 'block';
-                
-                showError(`Gagal memproses AI: ${error.message}. Coba gunakan Mode Manual.`);
+            } catch (err) {
+                console.error(err);
+                hideProgress();
+                showError(`Error AI: ${err.message}. Coba Mode Manual.`);
             }
         }
 
-        async function applyMaskToImage(originalFile, maskBlob) {
-            return new Promise((resolve, reject) => {
-                const originalImage = new Image();
-                const maskImage = new Image();
-                
-                let loadedCount = 0;
-                
-                const checkBothLoaded = () => {
-                    loadedCount++;
-                    if (loadedCount === 2) {
-                        // Set canvas size
-                        outputCanvas.width = originalImage.width;
-                        outputCanvas.height = originalImage.height;
-                        
-                        // Draw original
-                        outputCtx.drawImage(originalImage, 0, 0);
-                        
-                        // Get image data
-                        const imageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
-                        
-                        // Create temp canvas for mask
-                        const tempCanvas = document.createElement('canvas');
-                        tempCanvas.width = originalImage.width;
-                        tempCanvas.height = originalImage.height;
-                        const tempCtx = tempCanvas.getContext('2d');
-                        tempCtx.drawImage(maskImage, 0, 0, originalImage.width, originalImage.height);
-                        const maskData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                        
-                        // Apply mask to alpha channel
-                        for (let i = 0; i < imageData.data.length; i += 4) {
-                            // Mask is grayscale, use any channel
-                            imageData.data[i + 3] = maskData.data[i]; 
-                        }
-                        
-                        // Put back
-                        outputCtx.putImageData(imageData, 0, 0);
-                        
-                        // Convert to blob
-                        outputCanvas.toBlob((blob) => {
-                            resultBlobUrl = URL.createObjectURL(blob);
-                            resultImg.src = resultBlobUrl;
-                            resolve();
-                        }, 'image/png');
+        async function resizeImage(file, maxSize) {
+            return new Promise((resolve) => {
+                if (maxSize === 'original' || !maxSize) {
+                    resolve(file);
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+                    
+                    if (width <= maxSize && height <= maxSize) {
+                        resolve(file);
+                        return;
                     }
+
+                    const ratio = Math.min(maxSize / width, maxSize / height);
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(resolve, 'image/png', 0.95);
                 };
-                
-                originalImage.onload = checkBothLoaded;
-                maskImage.onload = checkBothLoaded;
-                originalImage.onerror = reject;
-                maskImage.onerror = reject;
-                
-                originalImage.src = URL.createObjectURL(originalFile);
-                maskImage.src = URL.createObjectURL(maskBlob);
+                img.src = URL.createObjectURL(file);
             });
         }
 
-        function loadImageForManual(file) {
+        async function applyMask(originalBlob, maskBlob) {
+            return new Promise((resolve) => {
+                const origImg = new Image();
+                const maskImg = new Image();
+                let loaded = 0;
+
+                const onBothLoaded = () => {
+                    if (++loaded < 2) return;
+
+                    outputCanvas.width = origImg.width;
+                    outputCanvas.height = origImg.height;
+                    
+                    outputCtx.drawImage(origImg, 0, 0);
+                    const imgData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
+
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = origImg.width;
+                    tempCanvas.height = origImg.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(maskImg, 0, 0, origImg.width, origImg.height);
+                    const maskData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+
+                    for (let i = 0; i < imgData.data.length; i += 4) {
+                        imgData.data[i + 3] = maskData.data[i];
+                    }
+
+                    outputCtx.putImageData(imgData, 0, 0);
+
+                    const format = document.getElementById('outputFormat').value;
+                    const mime = format === 'webp' ? 'image/webp' : 'image/png';
+                    
+                    outputCanvas.toBlob((blob) => {
+                        resultBlob = blob;
+                        resultImg.src = URL.createObjectURL(blob);
+                        document.getElementById('resultInfo').textContent = 
+                            `${outputCanvas.width}x${outputCanvas.height} • ${(blob.size/1024).toFixed(0)}KB`;
+                        resolve();
+                    }, mime, 0.95);
+                };
+
+                origImg.onload = onBothLoaded;
+                maskImg.onload = onBothLoaded;
+                origImg.src = URL.createObjectURL(originalBlob);
+                maskImg.src = URL.createObjectURL(maskBlob);
+            });
+        }
+
+        function loadForManual(file) {
             const img = new Image();
             img.onload = () => {
-                // Setup picker canvas
-                const maxW = 500;
-                const scale = Math.min(1, maxW / img.width);
-                pickerCanvas.width = img.width * scale;
-                pickerCanvas.height = img.height * scale;
+                const maxSize = parseInt(document.getElementById('outputSize').value) || 2000;
+                let { width, height } = img;
+                
+                if (maxSize !== 'original' && (width > maxSize || height > maxSize)) {
+                    const ratio = Math.min(maxSize / width, maxSize / height);
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
+                }
+
+                // Picker canvas (smaller for display)
+                const displayMax = 500;
+                const displayRatio = Math.min(1, displayMax / Math.max(width, height));
+                pickerCanvas.width = width * displayRatio;
+                pickerCanvas.height = height * displayRatio;
                 pickerCtx.drawImage(img, 0, 0, pickerCanvas.width, pickerCanvas.height);
-                
-                // Setup work canvas (full size)
-                workCanvas.width = img.width;
-                workCanvas.height = img.height;
-                workCtx.drawImage(img, 0, 0);
-                
-                // Setup output canvas
-                outputCanvas.width = img.width;
-                outputCanvas.height = img.height;
-                
-                // Show UI
+
+                // Work canvas (full size)
+                workCanvas.width = width;
+                workCanvas.height = height;
+                workCtx.drawImage(img, 0, 0, width, height);
+                originalImageData = workCtx.getImageData(0, 0, width, height);
+
+                outputCanvas.width = width;
+                outputCanvas.height = height;
+
                 uploadZone.style.display = 'none';
+                settingsRow.style.display = 'none';
                 pickerCanvas.style.display = 'block';
-                manualControls.style.display = 'grid';
-                manualButtons.style.display = 'flex';
-                resultSection.style.display = 'none';
+                document.getElementById('manualControls').classList.remove('hidden');
+                document.getElementById('manualButtons').classList.remove('hidden');
             };
             img.src = URL.createObjectURL(file);
         }
 
         window.processManual = function() {
-            const targetHex = document.getElementById('colorPicker').value;
+            const target = hexToRgb(document.getElementById('colorPicker').value);
             const tolerance = parseInt(document.getElementById('tolerance').value);
             const softness = parseInt(document.getElementById('softness').value);
             const despill = parseInt(document.getElementById('despill').value) / 100;
 
-            const target = hexToRgb(targetHex);
-            
-            // Get source data
-            const sourceData = workCtx.getImageData(0, 0, workCanvas.width, workCanvas.height);
-            const outputData = new ImageData(
-                new Uint8ClampedArray(sourceData.data),
-                sourceData.width,
-                sourceData.height
+            const output = new ImageData(
+                new Uint8ClampedArray(originalImageData.data),
+                originalImageData.width,
+                originalImageData.height
             );
-            const data = outputData.data;
+            const data = output.data;
 
             for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-
-                const distance = Math.sqrt(
-                    Math.pow(r - target.r, 2) +
-                    Math.pow(g - target.g, 2) +
-                    Math.pow(b - target.b, 2)
-                );
+                const r = data[i], g = data[i+1], b = data[i+2];
+                const dist = Math.sqrt((r-target.r)**2 + (g-target.g)**2 + (b-target.b)**2);
 
                 let alpha = 255;
-
-                if (distance < tolerance) {
+                if (dist < tolerance) {
                     alpha = 0;
-                } else if (distance < tolerance + softness) {
-                    alpha = ((distance - tolerance) / softness) * 255;
+                } else if (dist < tolerance + softness) {
+                    alpha = ((dist - tolerance) / softness) * 255;
                 }
 
                 // Despill
-                if (alpha > 0 && distance < tolerance + softness + 50) {
-                    const spillFactor = Math.max(0, 1 - (distance / (tolerance + 80)));
+                if (alpha > 0 && dist < tolerance + softness + 60) {
+                    const factor = Math.max(0, 1 - dist / (tolerance + 100));
                     const gray = r * 0.299 + g * 0.587 + b * 0.114;
-                    const strength = spillFactor * despill;
-                    
-                    data[i] = r * (1 - strength) + gray * strength;
-                    data[i + 1] = g * (1 - strength) + gray * strength;
-                    data[i + 2] = b * (1 - strength) + gray * strength;
+                    const str = factor * despill;
+                    data[i] = r * (1-str) + gray * str;
+                    data[i+1] = g * (1-str) + gray * str;
+                    data[i+2] = b * (1-str) + gray * str;
                 }
 
-                data[i + 3] = Math.round(alpha);
+                data[i+3] = Math.round(alpha);
             }
 
-            outputCtx.putImageData(outputData, 0, 0);
+            outputCtx.putImageData(output, 0, 0);
+
+            const format = document.getElementById('outputFormat').value;
+            const mime = format === 'webp' ? 'image/webp' : 'image/png';
             
             outputCanvas.toBlob((blob) => {
-                resultBlobUrl = URL.createObjectURL(blob);
-                resultImg.src = resultBlobUrl;
+                resultBlob = blob;
+                resultImg.src = URL.createObjectURL(blob);
+                document.getElementById('resultInfo').textContent = 
+                    `${outputCanvas.width}x${outputCanvas.height} • ${(blob.size/1024).toFixed(0)}KB`;
                 showResult();
-            }, 'image/png');
+            }, mime, 0.95);
         };
 
-        function showResult() {
-            progressSection.style.display = 'none';
-            pickerCanvas.style.display = 'none';
-            manualControls.style.display = 'none';
-            manualButtons.style.display = 'none';
-            resultSection.style.display = 'block';
-        }
-
         window.downloadResult = function() {
-            if (!resultBlobUrl) return;
+            if (!resultBlob) return;
+            const ext = document.getElementById('outputFormat').value;
             const a = document.createElement('a');
-            a.href = resultBlobUrl;
-            a.download = 'hasil_tanpa_background.png';
+            a.href = URL.createObjectURL(resultBlob);
+            a.download = `hasil_nobg.${ext}`;
             a.click();
         };
 
         window.resetAll = function() {
             currentFile = null;
-            resultBlobUrl = null;
+            resultBlob = null;
             fileInput.value = '';
-            
             uploadZone.style.display = 'block';
+            settingsRow.style.display = 'flex';
             progressSection.style.display = 'none';
             resultSection.style.display = 'none';
             pickerCanvas.style.display = 'none';
-            manualControls.style.display = 'none';
-            manualButtons.style.display = 'none';
-            
+            document.getElementById('manualControls').classList.add('hidden');
+            document.getElementById('manualButtons').classList.add('hidden');
             hideAlerts();
         };
 
-        function updateProgress(percent, text) {
-            const offset = 220 - (220 * percent / 100);
-            progressCircle.style.strokeDashoffset = offset;
+        function showProgress(text) {
+            uploadZone.style.display = 'none';
+            settingsRow.style.display = 'none';
+            resultSection.style.display = 'none';
+            progressSection.style.display = 'block';
+            progressText.textContent = text;
+            progressBar.style.width = '0%';
+        }
+
+        function updateProgress(pct, text) {
+            progressBar.style.width = pct + '%';
             progressText.textContent = text;
         }
 
+        function hideProgress() {
+            progressSection.style.display = 'none';
+            uploadZone.style.display = 'block';
+            settingsRow.style.display = 'flex';
+        }
+
+        function showResult() {
+            progressSection.style.display = 'none';
+            pickerCanvas.style.display = 'none';
+            document.getElementById('manualControls').classList.add('hidden');
+            document.getElementById('manualButtons').classList.add('hidden');
+            resultSection.style.display = 'block';
+        }
+
         function hexToRgb(hex) {
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? {
-                r: parseInt(result[1], 16),
-                g: parseInt(result[2], 16),
-                b: parseInt(result[3], 16)
-            } : { r: 0, g: 0, b: 0 };
+            const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return r ? { r: parseInt(r[1],16), g: parseInt(r[2],16), b: parseInt(r[3],16) } : {r:0,g:0,b:0};
         }
 
         function showError(msg) {
             alertError.innerHTML = '❌ ' + msg;
             alertError.style.display = 'block';
-            alertInfo.style.display = 'none';
         }
 
-        function showInfo(msg) {
-            alertInfo.innerHTML = '💡 ' + msg;
-            alertInfo.style.display = 'block';
-            alertError.style.display = 'none';
+        function showWarning(msg) {
+            alertWarning.innerHTML = '⚠️ ' + msg;
+            alertWarning.style.display = 'block';
         }
 
         function hideAlerts() {
             alertError.style.display = 'none';
-            alertInfo.style.display = 'none';
+            alertWarning.style.display = 'none';
         }
-
     </script>
 </body>
 </html>
