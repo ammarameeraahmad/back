@@ -3,257 +3,796 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Background Remover (Fixed)</title>
-    <!-- Load Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <!-- Load Library AI via Standard Script (Bukan Module) -->
-    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.4/dist/imgly-background-removal.umd.min.js"></script>
-    
+    <title>AI Background Remover - Fixed</title>
     <style>
-        :root {
-            --primary: #2563eb;
-            --bg: #f1f5f9;
-            --card: #ffffff;
-            --text: #1e293b;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            color: #fff;
             padding: 20px;
         }
 
         .container {
-            width: 100%;
-            max-width: 600px;
-            background: var(--card);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
-        h1 { margin-bottom: 10px; color: var(--primary); }
-        
-        /* Upload Area */
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #00d4ff, #7b2dff, #ff2d7c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #888;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .tab:hover { background: rgba(255,255,255,0.08); }
+        .tab.active {
+            background: linear-gradient(135deg, #7b2dff, #00d4ff);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Upload */
         .upload-zone {
-            border: 3px dashed #cbd5e1;
-            border-radius: 15px;
-            padding: 40px;
-            margin: 20px 0;
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 50px 20px;
+            text-align: center;
             cursor: pointer;
             transition: 0.3s;
-            background: #f8fafc;
-        }
-        
-        .upload-zone:hover {
-            border-color: var(--primary);
-            background: #eff6ff;
         }
 
+        .upload-zone:hover {
+            border-color: #00d4ff;
+            background: rgba(0,212,255,0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: #7b2dff;
+            background: rgba(123,45,255,0.1);
+        }
+
+        .upload-icon { font-size: 3rem; margin-bottom: 10px; }
+        
         #fileInput { display: none; }
 
-        /* Loading */
-        .loader {
+        /* Progress */
+        .progress-section {
             display: none;
-            margin: 20px 0;
+            text-align: center;
+            padding: 30px;
         }
-        .spinner {
-            width: 40px; height: 40px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+
+        .progress-ring {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
         }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 6;
+        }
+
+        .progress-ring .bg { stroke: rgba(255,255,255,0.1); }
+        .progress-ring .progress {
+            stroke: url(#gradient);
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.3s;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #888;
+        }
 
         /* Result */
-        .result-area {
-            display: none;
-            margin-top: 20px;
+        .result-section { display: none; }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
         }
-        
-        .result-img {
-            max-width: 100%;
+
+        @media (max-width: 600px) {
+            .compare-grid { grid-template-columns: 1fr; }
+        }
+
+        .img-box {
+            position: relative;
             border-radius: 10px;
-            background: repeating-conic-gradient(#e2e8f0 0% 25%, #fff 0% 50%) 50% / 20px 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            background: repeating-conic-gradient(#222 0% 25%, #2a2a2a 0% 50%) 50% / 15px 15px;
+            min-height: 200px;
+        }
+
+        .img-box img {
+            width: 100%;
+            display: block;
+        }
+
+        .img-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .btn {
-            background: var(--primary);
-            color: white;
+            flex: 1;
+            min-width: 150px;
+            padding: 14px 20px;
             border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 15px;
+            border-radius: 10px;
             font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        .btn:hover { opacity: 0.9; }
-        
-        .error-msg {
-            color: #ef4444;
-            background: #fee2e2;
-            padding: 10px;
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7b2dff, #00d4ff);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Chroma Key Controls */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .control-item label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .control-item input[type="range"] {
+            width: 100%;
+            accent-color: #7b2dff;
+        }
+
+        .color-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #colorPicker {
+            width: 50px;
+            height: 40px;
+            border: none;
             border-radius: 8px;
-            display: none;
-            margin-top: 10px;
-            font-size: 0.9rem;
+            cursor: pointer;
         }
+
+        #colorHex {
+            flex: 1;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        /* Canvas for picking */
+        .picker-canvas {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            cursor: crosshair;
+            display: none;
+            margin: 15px auto;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .alert-error {
+            background: rgba(255,45,124,0.1);
+            border: 1px solid rgba(255,45,124,0.3);
+            color: #ff6b9d;
+        }
+
+        .alert-info {
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.3);
+            color: #00d4ff;
+        }
+
+        /* Hidden canvas */
+        .hidden-canvas { display: none; }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <h1>✨ Magic Background Remover</h1>
-        <p>Hapus background otomatis dengan AI</p>
-        
-        <div id="errorMessage" class="error-msg"></div>
+        <h1>✨ Background Remover Pro</h1>
+        <p class="subtitle">Hapus background foto dengan mudah - AI atau Manual</p>
 
-        <!-- Upload -->
-        <div class="upload-zone" id="dropZone">
-            <span style="font-size: 3rem;">📁</span>
-            <h3>Klik untuk Upload Foto</h3>
-            <p style="color: #64748b; font-size: 0.9rem">Mendukung JPG & PNG</p>
-            <input type="file" id="fileInput" accept="image/*">
+        <!-- Alert Messages -->
+        <div class="alert alert-error" id="alertError"></div>
+        <div class="alert alert-info" id="alertInfo"></div>
+
+        <div class="card">
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('ai')">
+                    🤖 Mode AI (Otomatis)
+                </div>
+                <div class="tab" onclick="switchTab('manual')">
+                    🎨 Mode Manual (Chroma Key)
+                </div>
+            </div>
+
+            <!-- Upload Zone (Shared) -->
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-icon">📁</div>
+                <h3>Klik atau Drop Foto Disini</h3>
+                <p style="color:#666; margin-top:8px; font-size:0.9rem">JPG, PNG, WebP (Max 10MB)</p>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <!-- Progress Section -->
+            <div class="progress-section" id="progressSection">
+                <svg class="progress-ring" viewBox="0 0 80 80">
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#7b2dff"/>
+                            <stop offset="100%" stop-color="#00d4ff"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="bg" cx="40" cy="40" r="35"/>
+                    <circle class="progress" id="progressCircle" cx="40" cy="40" r="35"
+                        stroke-dasharray="220" stroke-dashoffset="220"/>
+                </svg>
+                <p class="progress-text" id="progressText">Memuat...</p>
+            </div>
+
+            <!-- AI Tab Content -->
+            <div class="tab-content active" id="tabAI">
+                <!-- Result will appear here -->
+            </div>
+
+            <!-- Manual Tab Content -->
+            <div class="tab-content" id="tabManual">
+                <p style="color:#888; font-size:0.9rem; margin-bottom:15px;">
+                    💡 Klik pada gambar di bawah untuk memilih warna background yang ingin dihapus
+                </p>
+                
+                <canvas id="pickerCanvas" class="picker-canvas"></canvas>
+
+                <div class="controls-grid" id="manualControls" style="display:none;">
+                    <div class="control-item">
+                        <label>Warna Target</label>
+                        <div class="color-row">
+                            <input type="color" id="colorPicker" value="#00ff00">
+                            <input type="text" id="colorHex" value="#00ff00">
+                        </div>
+                    </div>
+                    <div class="control-item">
+                        <label>Toleransi <span id="tolVal">35</span></label>
+                        <input type="range" id="tolerance" min="1" max="150" value="35">
+                    </div>
+                    <div class="control-item">
+                        <label>Kehalusan <span id="softVal">15</span></label>
+                        <input type="range" id="softness" min="0" max="50" value="15">
+                    </div>
+                    <div class="control-item">
+                        <label>Despill <span id="despillVal">50</span></label>
+                        <input type="range" id="despill" min="0" max="100" value="50">
+                    </div>
+                </div>
+
+                <div class="btn-group" id="manualButtons" style="display:none; margin-top:15px;">
+                    <button class="btn btn-primary" onclick="processManual()">⚡ Proses</button>
+                </div>
+            </div>
+
+            <!-- Result Section -->
+            <div class="result-section" id="resultSection">
+                <div class="compare-grid">
+                    <div class="img-box">
+                        <span class="img-label">Original</span>
+                        <img id="originalImg" alt="Original">
+                    </div>
+                    <div class="img-box">
+                        <span class="img-label">Hasil</span>
+                        <img id="resultImg" alt="Result">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="downloadResult()">📥 Download PNG</button>
+                    <button class="btn btn-secondary" onclick="resetAll()">🔄 Foto Baru</button>
+                </div>
+            </div>
         </div>
 
-        <!-- Loading -->
-        <div class="loader" id="loader">
-            <div class="spinner"></div>
-            <p id="statusText">Sedang mendownload AI Model...<br><small>(Hanya lama di awal)</small></p>
-        </div>
-
-        <!-- Result -->
-        <div class="result-area" id="resultArea">
-            <img id="resultImage" class="result-img" alt="Hasil">
-            <br>
-            <button class="btn" onclick="downloadImage()">📥 Download PNG</button>
-            <br>
-            <button style="background:none; border:none; color:#64748b; margin-top:10px; cursor:pointer; text-decoration:underline;" onclick="location.reload()">Coba Foto Lain</button>
+        <!-- Tips -->
+        <div class="card" style="padding:15px;">
+            <p style="font-size:0.85rem; color:#888;">
+                <strong style="color:#00d4ff;">💡 Tips:</strong> 
+                Mode AI bekerja otomatis untuk foto orang/objek. 
+                Mode Manual cocok untuk background warna solid (green screen, dll).
+            </p>
         </div>
     </div>
 
-    <script>
-        // Akses library global
-        let removeBackground;
+    <!-- Hidden Canvases -->
+    <canvas id="workCanvas" class="hidden-canvas"></canvas>
+    <canvas id="outputCanvas" class="hidden-canvas"></canvas>
 
-        const dropZone = document.getElementById('dropZone');
+    <script type="module">
+        // ============ IMPORT AI LIBRARY ============
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0';
+        
+        // Konfigurasi untuk browser
+        env.allowLocalModels = false;
+        env.useBrowserCache = true;
+
+        // ============ GLOBAL VARIABLES ============
+        let currentFile = null;
+        let currentMode = 'ai';
+        let segmenter = null;
+        let resultBlobUrl = null;
+
+        // DOM Elements
+        const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
-        const loader = document.getElementById('loader');
-        const resultArea = document.getElementById('resultArea');
-        const resultImage = document.getElementById('resultImage');
-        const statusText = document.getElementById('statusText');
-        const errorMsg = document.getElementById('errorMessage');
+        const progressSection = document.getElementById('progressSection');
+        const progressCircle = document.getElementById('progressCircle');
+        const progressText = document.getElementById('progressText');
+        const resultSection = document.getElementById('resultSection');
+        const originalImg = document.getElementById('originalImg');
+        const resultImg = document.getElementById('resultImg');
+        const alertError = document.getElementById('alertError');
+        const alertInfo = document.getElementById('alertInfo');
 
-        let imageUrl = null;
+        // Manual mode elements
+        const pickerCanvas = document.getElementById('pickerCanvas');
+        const pickerCtx = pickerCanvas.getContext('2d');
+        const workCanvas = document.getElementById('workCanvas');
+        const workCtx = workCanvas.getContext('2d');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const outputCtx = outputCanvas.getContext('2d');
+        const manualControls = document.getElementById('manualControls');
+        const manualButtons = document.getElementById('manualButtons');
 
-        // Cek apakah library termuat
-        window.onload = function() {
-            if (typeof imglyRemoveBackground === 'function') {
-                removeBackground = imglyRemoveBackground;
-            } else {
-                showError("Gagal memuat library AI. Pastikan ada koneksi internet.");
+        // ============ EVENT LISTENERS ============
+        
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Color picker sync
+        document.getElementById('colorPicker').addEventListener('input', (e) => {
+            document.getElementById('colorHex').value = e.target.value;
+        });
+
+        document.getElementById('colorHex').addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                document.getElementById('colorPicker').value = val;
+            }
+        });
+
+        // Range value displays
+        document.getElementById('tolerance').addEventListener('input', (e) => {
+            document.getElementById('tolVal').textContent = e.target.value;
+        });
+        document.getElementById('softness').addEventListener('input', (e) => {
+            document.getElementById('softVal').textContent = e.target.value;
+        });
+        document.getElementById('despill').addEventListener('input', (e) => {
+            document.getElementById('despillVal').textContent = e.target.value;
+        });
+
+        // Pick color from canvas
+        pickerCanvas.addEventListener('click', (e) => {
+            const rect = pickerCanvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (pickerCanvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (pickerCanvas.height / rect.height);
+            
+            const pixel = pickerCtx.getImageData(x, y, 1, 1).data;
+            const hex = '#' + [pixel[0], pixel[1], pixel[2]]
+                .map(x => x.toString(16).padStart(2, '0')).join('');
+            
+            document.getElementById('colorPicker').value = hex;
+            document.getElementById('colorHex').value = hex;
+        });
+
+        // ============ FUNCTIONS ============
+
+        window.switchTab = function(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', (i === 0 && mode === 'ai') || (i === 1 && mode === 'manual'));
+            });
+            document.getElementById('tabAI').classList.toggle('active', mode === 'ai');
+            document.getElementById('tabManual').classList.toggle('active', mode === 'manual');
+            
+            // If file already loaded and switching to manual, show controls
+            if (currentFile && mode === 'manual') {
+                loadImageForManual(currentFile);
             }
         };
 
-        // Event Listeners
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.backgroundColor = '#e0f2fe'; });
-        dropZone.addEventListener('dragleave', () => { dropZone.style.backgroundColor = '#f8fafc'; });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const file = e.dataTransfer.files[0];
-            if (file) handleFile(file);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) handleFile(file);
-        });
-
-        async function handleFile(file) {
+        function handleFile(file) {
+            if (!file) return;
+            
             if (!file.type.startsWith('image/')) {
-                showError("Harap upload file gambar (JPG/PNG).");
+                showError('Harap upload file gambar (JPG/PNG)');
                 return;
             }
 
-            // UI Changes
-            dropZone.style.display = 'none';
-            errorMsg.style.display = 'none';
-            loader.style.display = 'block';
-            statusText.innerHTML = "Menyiapkan AI...<br><small>(Mohon tunggu, jangan refresh)</small>";
+            if (file.size > 10 * 1024 * 1024) {
+                showError('Ukuran file maksimal 10MB');
+                return;
+            }
 
-            try {
-                // Konfigurasi agar lebih ringan
-                const config = {
-                    progress: (key, current, total) => {
-                        const percent = Math.round((current / total) * 100);
-                        if (key.includes('fetch')) {
-                            statusText.innerText = `Mendownload Data AI: ${percent}%`;
-                        } else {
-                            statusText.innerText = `Memproses Gambar: ${percent}%`;
-                        }
-                    },
-                    // Pakai model standard (lebih stabil dari small/large kadang)
-                    model: 'small', 
-                    output: {
-                        format: 'image/png',
-                        quality: 0.8
-                    }
-                };
+            hideAlerts();
+            currentFile = file;
+            originalImg.src = URL.createObjectURL(file);
 
-                // Proses AI
-                const blob = await removeBackground(file, config);
-                
-                // Tampilkan Hasil
-                imageUrl = URL.createObjectURL(blob);
-                resultImage.src = imageUrl;
-                
-                loader.style.display = 'none';
-                resultArea.style.display = 'block';
-
-            } catch (error) {
-                console.error(error);
-                dropZone.style.display = 'block';
-                loader.style.display = 'none';
-                
-                let pesanError = "Gagal memproses gambar.";
-                
-                // Deteksi error umum karena file protocol
-                if (window.location.protocol === 'file:') {
-                    pesanError = "⚠️ ERROR: Browser memblokir AI di mode file lokal.<br><b>Solusi:</b> Gunakan 'Live Server' di VS Code atau upload file HTML ini ke hosting/localhost.";
-                } else if (error.message.includes('fetch')) {
-                    pesanError = "Gagal mendownload model AI. Cek koneksi internet Anda.";
-                }
-
-                showError(pesanError);
+            if (currentMode === 'ai') {
+                processAI(file);
+            } else {
+                loadImageForManual(file);
             }
         }
 
-        function downloadImage() {
-            if (!imageUrl) return;
-            const link = document.createElement('a');
-            link.href = imageUrl;
-            link.download = 'ai-result-hd.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        async function processAI(file) {
+            uploadZone.style.display = 'none';
+            resultSection.style.display = 'none';
+            progressSection.style.display = 'block';
+            
+            try {
+                updateProgress(5, 'Memuat model AI...');
+                
+                // Load segmenter jika belum ada
+                if (!segmenter) {
+                    segmenter = await pipeline('image-segmentation', 'Xenova/modnet', {
+                        progress_callback: (progress) => {
+                            if (progress.status === 'downloading') {
+                                const pct = Math.round((progress.loaded / progress.total) * 40);
+                                updateProgress(5 + pct, `Mendownload model: ${pct}%`);
+                            }
+                        }
+                    });
+                }
+
+                updateProgress(50, 'Memproses gambar...');
+
+                // Buat URL dari file
+                const imageUrl = URL.createObjectURL(file);
+                
+                // Jalankan segmentasi
+                const result = await segmenter(imageUrl);
+                
+                updateProgress(80, 'Membuat hasil...');
+
+                // Ambil mask dari hasil
+                if (result && result.length > 0 && result[0].mask) {
+                    const maskBlob = await result[0].mask.toBlob();
+                    
+                    // Gabungkan gambar asli dengan mask
+                    await applyMaskToImage(file, maskBlob);
+                    
+                    updateProgress(100, 'Selesai!');
+                    showResult();
+                } else {
+                    throw new Error('Hasil segmentasi tidak valid');
+                }
+
+            } catch (error) {
+                console.error('AI Error:', error);
+                progressSection.style.display = 'none';
+                uploadZone.style.display = 'block';
+                
+                showError(`Gagal memproses AI: ${error.message}. Coba gunakan Mode Manual.`);
+            }
+        }
+
+        async function applyMaskToImage(originalFile, maskBlob) {
+            return new Promise((resolve, reject) => {
+                const originalImage = new Image();
+                const maskImage = new Image();
+                
+                let loadedCount = 0;
+                
+                const checkBothLoaded = () => {
+                    loadedCount++;
+                    if (loadedCount === 2) {
+                        // Set canvas size
+                        outputCanvas.width = originalImage.width;
+                        outputCanvas.height = originalImage.height;
+                        
+                        // Draw original
+                        outputCtx.drawImage(originalImage, 0, 0);
+                        
+                        // Get image data
+                        const imageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
+                        
+                        // Create temp canvas for mask
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = originalImage.width;
+                        tempCanvas.height = originalImage.height;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCtx.drawImage(maskImage, 0, 0, originalImage.width, originalImage.height);
+                        const maskData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                        
+                        // Apply mask to alpha channel
+                        for (let i = 0; i < imageData.data.length; i += 4) {
+                            // Mask is grayscale, use any channel
+                            imageData.data[i + 3] = maskData.data[i]; 
+                        }
+                        
+                        // Put back
+                        outputCtx.putImageData(imageData, 0, 0);
+                        
+                        // Convert to blob
+                        outputCanvas.toBlob((blob) => {
+                            resultBlobUrl = URL.createObjectURL(blob);
+                            resultImg.src = resultBlobUrl;
+                            resolve();
+                        }, 'image/png');
+                    }
+                };
+                
+                originalImage.onload = checkBothLoaded;
+                maskImage.onload = checkBothLoaded;
+                originalImage.onerror = reject;
+                maskImage.onerror = reject;
+                
+                originalImage.src = URL.createObjectURL(originalFile);
+                maskImage.src = URL.createObjectURL(maskBlob);
+            });
+        }
+
+        function loadImageForManual(file) {
+            const img = new Image();
+            img.onload = () => {
+                // Setup picker canvas
+                const maxW = 500;
+                const scale = Math.min(1, maxW / img.width);
+                pickerCanvas.width = img.width * scale;
+                pickerCanvas.height = img.height * scale;
+                pickerCtx.drawImage(img, 0, 0, pickerCanvas.width, pickerCanvas.height);
+                
+                // Setup work canvas (full size)
+                workCanvas.width = img.width;
+                workCanvas.height = img.height;
+                workCtx.drawImage(img, 0, 0);
+                
+                // Setup output canvas
+                outputCanvas.width = img.width;
+                outputCanvas.height = img.height;
+                
+                // Show UI
+                uploadZone.style.display = 'none';
+                pickerCanvas.style.display = 'block';
+                manualControls.style.display = 'grid';
+                manualButtons.style.display = 'flex';
+                resultSection.style.display = 'none';
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        window.processManual = function() {
+            const targetHex = document.getElementById('colorPicker').value;
+            const tolerance = parseInt(document.getElementById('tolerance').value);
+            const softness = parseInt(document.getElementById('softness').value);
+            const despill = parseInt(document.getElementById('despill').value) / 100;
+
+            const target = hexToRgb(targetHex);
+            
+            // Get source data
+            const sourceData = workCtx.getImageData(0, 0, workCanvas.width, workCanvas.height);
+            const outputData = new ImageData(
+                new Uint8ClampedArray(sourceData.data),
+                sourceData.width,
+                sourceData.height
+            );
+            const data = outputData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                const distance = Math.sqrt(
+                    Math.pow(r - target.r, 2) +
+                    Math.pow(g - target.g, 2) +
+                    Math.pow(b - target.b, 2)
+                );
+
+                let alpha = 255;
+
+                if (distance < tolerance) {
+                    alpha = 0;
+                } else if (distance < tolerance + softness) {
+                    alpha = ((distance - tolerance) / softness) * 255;
+                }
+
+                // Despill
+                if (alpha > 0 && distance < tolerance + softness + 50) {
+                    const spillFactor = Math.max(0, 1 - (distance / (tolerance + 80)));
+                    const gray = r * 0.299 + g * 0.587 + b * 0.114;
+                    const strength = spillFactor * despill;
+                    
+                    data[i] = r * (1 - strength) + gray * strength;
+                    data[i + 1] = g * (1 - strength) + gray * strength;
+                    data[i + 2] = b * (1 - strength) + gray * strength;
+                }
+
+                data[i + 3] = Math.round(alpha);
+            }
+
+            outputCtx.putImageData(outputData, 0, 0);
+            
+            outputCanvas.toBlob((blob) => {
+                resultBlobUrl = URL.createObjectURL(blob);
+                resultImg.src = resultBlobUrl;
+                showResult();
+            }, 'image/png');
+        };
+
+        function showResult() {
+            progressSection.style.display = 'none';
+            pickerCanvas.style.display = 'none';
+            manualControls.style.display = 'none';
+            manualButtons.style.display = 'none';
+            resultSection.style.display = 'block';
+        }
+
+        window.downloadResult = function() {
+            if (!resultBlobUrl) return;
+            const a = document.createElement('a');
+            a.href = resultBlobUrl;
+            a.download = 'hasil_tanpa_background.png';
+            a.click();
+        };
+
+        window.resetAll = function() {
+            currentFile = null;
+            resultBlobUrl = null;
+            fileInput.value = '';
+            
+            uploadZone.style.display = 'block';
+            progressSection.style.display = 'none';
+            resultSection.style.display = 'none';
+            pickerCanvas.style.display = 'none';
+            manualControls.style.display = 'none';
+            manualButtons.style.display = 'none';
+            
+            hideAlerts();
+        };
+
+        function updateProgress(percent, text) {
+            const offset = 220 - (220 * percent / 100);
+            progressCircle.style.strokeDashoffset = offset;
+            progressText.textContent = text;
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
         }
 
         function showError(msg) {
-            errorMsg.innerHTML = msg;
-            errorMsg.style.display = 'block';
+            alertError.innerHTML = '❌ ' + msg;
+            alertError.style.display = 'block';
+            alertInfo.style.display = 'none';
         }
+
+        function showInfo(msg) {
+            alertInfo.innerHTML = '💡 ' + msg;
+            alertInfo.style.display = 'block';
+            alertError.style.display = 'none';
+        }
+
+        function hideAlerts() {
+            alertError.style.display = 'none';
+            alertInfo.style.display = 'none';
+        }
+
     </script>
 </body>
-
 </html>
